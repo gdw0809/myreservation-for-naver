@@ -1,9 +1,13 @@
-# Node.js와 브라우저가 모두 설치된 안정적인 이미지를 사용 (최신 LTS 버전)
-FROM mcr.microsoft.com/playwright/node:jammy
+# GitHub Container Registry의 공식 Puppeteer 이미지를 사용합니다.
+FROM ghcr.io/puppeteer/puppeteer:22.10.0
 
-# 이하 내용은 동일합니다.
-WORKDIR /usr/src/app
-COPY package*.json ./
+# Puppeteer 이미지는 보안을 위해 non-root 'pptruser'로 실행됩니다.
+# 작업 폴더를 해당 사용자의 홈으로 변경하고 파일 소유권을 지정합니다.
+WORKDIR /home/pptruser
+
+COPY --chown=pptruser:pptruser package*.json ./
 RUN npm install
-COPY . .
+
+COPY --chown=pptruser:pptruser . .
+
 CMD ["npm", "start"]
