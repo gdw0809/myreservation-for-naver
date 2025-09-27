@@ -18,25 +18,19 @@ async function checkReservation() {
     });
     const page = await browser.newPage();
     await page.goto(TARGET_URL, { waitUntil: "networkidle2" });
-    
-    // =================================================================
-    //                    [수정된 핵심 부분]
-    // 'aria-disabled' 속성 값이 'false'인 버튼을 확인합니다.
-    // =================================================================
-    const isAvailable = await page.evaluate(() => {
-      // 1. 페이지의 모든 버튼 요소를 가져옵니다.
-      const allButtons = Array.from(document.querySelectorAll('button'));
 
-      // 2. 아래 두 가지 조건을 '모두' 만족하는 버튼이 있는지 찾습니다.
+    const isAvailable = await page.evaluate(() => {
+      const allButtons = Array.from(document.querySelectorAll('button'));
       return allButtons.some(btn => {
         const hasTimeText = btn.textContent.includes('오전') || btn.textContent.includes('오후');
         const isEnabled = btn.getAttribute('aria-disabled') === 'false';
-        return hasTimeText && isEnabled; // 두 조건이 모두 참이어야 함
+        return hasTimeText && isEnabled;
       });
     });
 
     if (isAvailable) {
       console.log("🎉 빈자리 발견! 푸시 알림을 보냅니다.");
+      // 알림 메시지 본문은 한글로 유지해도 괜찮습니다.
       await sendNotification(`🚨 [${CHECK_DATE}] 네이버 예약에 빈자리가 생겼습니다!`);
     } else {
       console.log("😴 빈자리 없음. 다음 확인까지 대기합니다.");
@@ -51,7 +45,15 @@ async function checkReservation() {
 async function sendNotification(message) {
   try {
     await axios.post(`https://ntfy.sh/${NTFY_TOPIC}`, message, {
-      headers: { 'Title': '네이버 예약 빈자리 알림', 'Priority': 'high', 'Tags': 'tada' },
+      headers: { 
+        // =================================================
+        //            [수정된 핵심 부분]
+        //         Title 헤더를 영문으로 변경
+        // =================================================
+        'Title': 'Naver Reservation Alert',
+        'Priority': 'high',
+        'Tags': 'tada'
+      },
     });
   } catch (err) {
     console.error("알림 전송 실패:", err.message);
