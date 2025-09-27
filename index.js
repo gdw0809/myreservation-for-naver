@@ -2,14 +2,14 @@ import puppeteer from "puppeteer";
 import cron from "node-cron";
 import axios from "axios";
 
-// 날짜 부분을 변수로 분리하고, 환경 변수에서 읽어오도록 변경
-const CHECK_DATE = process.env.CHECK_DATE || "2025-09-28"; // Render에 설정된 CHECK_DATE 값을 읽고, 없으면 기본값 "2025-09-28" 사용
+// 환경 변수에서 날짜를 읽어오도록 설정
+const CHECK_DATE = process.env.CHECK_DATE || "2025-10-31";
 const TARGET_URL = `https://m.booking.naver.com/booking/12/bizes/843881/items/6627331?area=pll&entry=pll&isProgramBizItem=false&lang=ko&startDateTime=${CHECK_DATE}T00%3A00%3A00%2B09%3A00&theme=place`;
 const NTFY_TOPIC = "my-naver-alert-a1b2c3d4";
 const CHECK_INTERVAL = "* * * * *";
 
 async function checkReservation() {
-  console.log(`[${new Date().toLocaleString()}] ${CHECK_DATE} 날짜 확인 시작...`); // 로그에 확인 중인 날짜 출력
+  console.log(`[${new Date().toLocaleString()}] ${CHECK_DATE} 날짜 확인 시작...`);
   let browser = null;
   try {
     browser = await puppeteer.launch({
@@ -18,13 +18,26 @@ async function checkReservation() {
     });
     const page = await browser.newPage();
     await page.goto(TARGET_URL, { waitUntil: "networkidle2" });
+    
+    // =================================================================
+    //                    [수정된 핵심 부분]
+    // 'aria-disabled' 속성 값이 'false'인 버튼을 확인합니다.
+    // =================================================================
     const isAvailable = await page.evaluate(() => {
-      const buttons = Array.from(document.querySelectorAll('button:not([disabled])'));
-      return buttons.some(btn => btn.textContent.includes('오전') || btn.textContent.includes('오후'));
+      // 1. 페이지의 모든 버튼 요소를 가져옵니다.
+      const allButtons = Array.from(document.querySelectorAll('button'));
+
+      // 2. 아래 두 가지 조건을 '모두' 만족하는 버튼이 있는지 찾습니다.
+      return allButtons.some(btn => {
+        const hasTimeText = btn.textContent.includes('오전') || btn.textContent.includes('오후');
+        const isEnabled = btn.getAttribute('aria-disabled') === 'false';
+        return hasTimeText && isEnabled; // 두 조건이 모두 참이어야 함
+      });
     });
+
     if (isAvailable) {
       console.log("🎉 빈자리 발견! 푸시 알림을 보냅니다.");
-      await sendNotification("🚨 네이버 예약에 빈자리가 생겼습니다! 바로 확인하세요!");
+      await sendNotification(`🚨 [${CHECK_DATE}] 네이버 예약에 빈자리가 생겼습니다!`);
     } else {
       console.log("😴 빈자리 없음. 다음 확인까지 대기합니다.");
     }
