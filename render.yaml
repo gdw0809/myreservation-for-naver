@@ -1,0 +1,9 @@
+services:
+  - type: web
+    name: naver-alert
+    runtime: node
+    plan: free
+    buildCommand: "npm install"
+    startCommand: "npm start"
+    buildpacks:
+      - url: https://github.com/render-examples/puppeteer
