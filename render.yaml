@@ -1,6 +1,6 @@
 services:
   - type: web
-    name: naver-alert
+    name: my-naver-reservation # <-- 이 부분을 원하는 이름으로 변경
     runtime: docker
     dockerfilePath: ./Dockerfile
     plan: free
