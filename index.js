@@ -1,7 +1,8 @@
 import puppeteer from "puppeteer-core";
-import chromium from "chrome-aws-lambda";
+import chromium from "@sparticuz/chromium"; // 이 부분만 수정
 import cron from "node-cron";
 import axios from "axios";
+
 
 // =================================================
 //                    [설정]
