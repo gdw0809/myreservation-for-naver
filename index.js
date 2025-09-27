@@ -2,12 +2,14 @@ import puppeteer from "puppeteer";
 import cron from "node-cron";
 import axios from "axios";
 
-const TARGET_URL = "https://m.booking.naver.com/booking/12/bizes/843881/items/6627331?area=pll&entry=pll&isProgramBizItem=false&lang=ko&startDateTime=2025-09-28T00%3A00%3A00%2B09%3A00&theme=place";
+// 날짜 부분을 변수로 분리하고, 환경 변수에서 읽어오도록 변경
+const CHECK_DATE = process.env.CHECK_DATE || "2025-09-28"; // Render에 설정된 CHECK_DATE 값을 읽고, 없으면 기본값 "2025-09-28" 사용
+const TARGET_URL = `https://m.booking.naver.com/booking/12/bizes/843881/items/6627331?area=pll&entry=pll&isProgramBizItem=false&lang=ko&startDateTime=${CHECK_DATE}T00%3A00%3A00%2B09%3A00&theme=place`;
 const NTFY_TOPIC = "my-naver-alert-a1b2c3d4";
 const CHECK_INTERVAL = "* * * * *";
 
 async function checkReservation() {
-  console.log(`[${new Date().toLocaleString()}] 예약 현황 확인 시작...`);
+  console.log(`[${new Date().toLocaleString()}] ${CHECK_DATE} 날짜 확인 시작...`); // 로그에 확인 중인 날짜 출력
   let browser = null;
   try {
     browser = await puppeteer.launch({
